@@ -16,6 +16,7 @@ class ProcessMonitor: ObservableObject {
     @Published var processes: [ClaudeProcess] = []
     @Published var totalMemoryMB: Double = 0
     @Published var totalCPU: Double = 0
+    @Published var tick: Int = 0  // forces menu bar label to re-render
     private var timer: Timer?
     private let queue = DispatchQueue(label: "com.ishanrai.claudeprofiler.monitor")
 
@@ -55,9 +56,9 @@ class ProcessMonitor: ObservableObject {
             task.standardError = Pipe()
 
             guard let _ = try? task.run() else { return }
-            task.waitUntilExit()
-
+            // Read BEFORE waitUntilExit to avoid deadlock if pipe buffer fills
             let data = pipe.fileHandleForReading.readDataToEndOfFile()
+            task.waitUntilExit()
             guard let output = String(data: data, encoding: .utf8) else { return }
 
             var allLines: [(pid: Int, ppid: Int, rss: Int, cpu: Double, cmd: String)] = []
@@ -98,6 +99,7 @@ class ProcessMonitor: ObservableObject {
                 self.processes = result
                 self.totalMemoryMB = result.reduce(0) { $0 + $1.memoryMB }
                 self.totalCPU = result.reduce(0) { $0 + $1.cpuPercent }
+                self.tick += 1
             }
         }
     }
@@ -347,6 +349,7 @@ struct ClaudeProfilerApp: App {
             ContentView(monitor: monitor)
                 .frame(width: 440, height: monitor.processes.isEmpty ? 420 : 560)
         } label: {
+            let _ = monitor.tick  // subscribe to changes
             let mem = monitor.totalMemoryMB
             if mem > 0 {
                 let memStr = mem >= 1024
