@@ -36,6 +36,11 @@ class ProcessMonitor: ObservableObject {
 
     // Heat based on % of system RAM used by Claude
     // 0.0 = nothing, 1.0 = Claude is using 15%+ of total RAM
+    // Idle = no main claude CLI processes (background helpers like chrome-native-host don't count)
+    var isIdle: Bool {
+        !processes.contains { $0.name.lowercased() == "claude" }
+    }
+
     var heatLevel: Double {
         let memPercent = totalMemoryMB / Self.systemMemoryMB
         let memHeat = min(memPercent / 0.15, 1.0)  // 15% of RAM = max heat
@@ -171,8 +176,8 @@ struct CrabCanvas: View {
 
     private var animState: (name: String, fps: Double) {
         if isIdle { return ("sleeping", 1.5) }
-        if heat > 0.6 { return ("alert", 4.0) }
-        if heat > 0.3 { return ("idle", 3.0) }
+        if heat > 0.7 { return ("alert", 4.0) }
+        if heat > 0.4 { return ("idle", 3.0) }
         return ("idle", 2.0)
     }
 
@@ -184,12 +189,12 @@ struct CrabCanvas: View {
 
     // Color multiply tint — shifts toward red as heat increases
     private var tintColor: Color {
-        if heat > 0.6 {
-            let t = min((heat - 0.6) / 0.4, 1.0)
+        if heat > 0.7 {
+            let t = min((heat - 0.7) / 0.3, 1.0)
             return Color(red: 1.0, green: 1.0 - t * 0.4, blue: 1.0 - t * 0.5)
         }
-        if heat > 0.3 {
-            let t = (heat - 0.3) / 0.3
+        if heat > 0.4 {
+            let t = (heat - 0.4) / 0.3
             return Color(red: 1.0, green: 1.0 - t * 0.1, blue: 1.0 - t * 0.15)
         }
         return .white
@@ -212,7 +217,7 @@ struct CrabCanvas: View {
 
                 // Construction hat when working (heat 0.3–0.6)
                 // Pixel-art hard hat matching the crab's 1.5pt pixel size
-                if !isIdle && heat > 0.3 && heat <= 0.6 {
+                if !isIdle && heat > 0.4 && heat <= 0.7 {
                     let ps: CGFloat = 1.5  // pixel size (matches crab sprite scale)
                     let yellow  = Color(red: 1.0, green: 0.84, blue: 0.0)
                     let darkYel = Color(red: 0.85, green: 0.68, blue: 0.0)
@@ -303,7 +308,7 @@ struct CrabCanvas: View {
                 }
 
                 // Sweat drops when hot
-                if heat > 0.5 {
+                if heat > 0.6 {
                     let cr = CGRect(x: 7, y: 2, width: 96, height: 96)
                     let sweat = Color(red: 0.45, green: 0.72, blue: 0.95)
                     for i in 0..<2 {
@@ -425,7 +430,7 @@ struct ContentView: View {
         HStack {
             Spacer()
             VStack(spacing: 6) {
-                CrabView(heat: monitor.heatLevel, isIdle: monitor.processes.isEmpty)
+                CrabView(heat: monitor.heatLevel, isIdle: monitor.isIdle)
                 Text(crabMood)
                     .font(.system(size: 9, weight: .medium, design: .monospaced))
                     .foregroundColor(moodColor)
@@ -437,7 +442,7 @@ struct ContentView: View {
     }
 
     private var crabMood: String {
-        if monitor.processes.isEmpty { return "zzz... no claude running" }
+        if monitor.isIdle { return "zzz... no claude running" }
         let h = monitor.heatLevel
         if h > 0.7 { return "sweating!! too many processes!" }
         if h > 0.4 { return "working hard..." }
@@ -548,7 +553,7 @@ struct ContentView: View {
     private var footerView: some View {
         HStack(spacing: 8) {
             Circle()
-                .fill(monitor.processes.isEmpty ? dim : Color.green)
+                .fill(monitor.isIdle ? dim : Color.green)
                 .frame(width: 6, height: 6)
             Text("refresh: 3s")
                 .font(.system(size: 9, design: .monospaced))
