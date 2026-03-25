@@ -23,8 +23,8 @@ cp -r sprites "$APP/Contents/Resources/"
 
 # Sign with Developer ID + hardened runtime + entitlements
 if security find-identity -v -p codesigning | grep -q "$IDENTITY"; then
-    codesign --force --options runtime --entitlements "$ENTITLEMENTS" --sign "$IDENTITY" "$APP"
-    echo "Signed with Developer ID (hardened runtime + entitlements)."
+    codesign --force --sign "$IDENTITY" "$APP"
+    echo "Signed with Developer ID."
 else
     codesign --force --sign - "$APP"
     echo "Signed ad-hoc (Developer ID cert not found)."
