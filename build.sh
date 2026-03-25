@@ -21,14 +21,9 @@ swiftc ClaudeProfiler.swift \
 cp Info.plist "$APP/Contents/"
 cp -r sprites "$APP/Contents/Resources/"
 
-# Sign with Developer ID + hardened runtime + entitlements
-if security find-identity -v -p codesigning | grep -q "$IDENTITY"; then
-    codesign --force --sign "$IDENTITY" "$APP"
-    echo "Signed with Developer ID."
-else
-    codesign --force --sign - "$APP"
-    echo "Signed ad-hoc (Developer ID cert not found)."
-fi
+# Ad-hoc sign for local dev builds
+# For distribution: use ./release.sh to sign with Developer ID + notarize
+codesign --force --sign - "$APP"
 
 echo "Built $APP successfully."
 echo "Run with: open $APP"
