@@ -2,7 +2,7 @@
 
 A macOS menu bar app that shows how much memory and CPU your Claude processes are eating.
 
-![screenshot](https://github.com/1shanra1/claude-mac-profiler/assets/screenshot.png)
+![screenshot](screenshot.png)
 
 ## Install
 
