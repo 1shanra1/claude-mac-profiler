@@ -1,0 +1,6 @@
+ClaudeProfiler.app/
+ClaudeProfiler.app.zip
+*.o
+*.swp
+.DS_Store
+reference/
