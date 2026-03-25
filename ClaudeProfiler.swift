@@ -520,7 +520,7 @@ struct ContentView: View {
 
     private func processRow(_ proc: ClaudeProcess) -> some View {
         HStack(spacing: 0) {
-            Text("\(proc.id)")
+            Text(String(proc.id))
                 .frame(width: 60, alignment: .leading)
                 .foregroundColor(dim)
             Text(proc.name)
